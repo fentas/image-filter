@@ -2,6 +2,7 @@
   "name": "image-filter",
   "private": true,
   "dependencies": {
-    "polymer": "Polymer/polymer#master"
+    "polymer": "Polymer/polymer#master",
+    "canvasfilter": "fentas/canvasfilter#master"
   }
 }

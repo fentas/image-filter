@@ -1,0 +1,133 @@
+<!--
+Copyright (c) 2014 mui-is Authors. All rights reserved.
+
+-->
+
+<link rel="import" href="../polymer/polymer.html">
+<script src="../canvasfilter/canvasfilter.js"></script>
+<!--
+
+-->
+
+<polymer-element name="image-filter" attributes="src width heigh font">
+  <template>
+
+    <style>
+
+      #wrapper {
+        display: inline-block;
+      }
+
+    </style>
+    <div id="wrapper"></div>
+
+  </template>
+  <script>
+  (function() {
+    var _ = {
+      width: null,
+      height: null
+    };
+
+    Polymer('image-filter', {
+      font: 'normal 12pt Verdana',
+      publish: {
+        filter: null,
+        context: null,
+        data: null
+      },
+
+      ready: function() {
+        var _this = this;
+        Object.defineProperty(_this, 'data', {
+          get: function() {
+            return _this.context.canvas.toDataURL();
+          }
+        });
+        Object.defineProperty(_this, 'filter', {
+          get: function() {
+            return _this.context.filter;
+          }
+        });
+        Object.defineProperty(_this, 'width', {
+          get: function() {
+            return _this.context ? _this.context.canvas.clientWidth : 0;
+          },
+          set: _this.resolutionChanged.bind(_this, 'width')
+        });
+        Object.defineProperty(_this, 'height', {
+          get: function() {
+            return _this.context ? _this.context.canvas.clientHeight : 0;
+          },
+          set: _this.resolutionChanged.bind(_this, 'height')
+        });
+      },
+      domReady: function() {
+
+      },
+
+      resolutionChanged: function(attr, val) {
+        var style = this.context.canvas.style;
+        _[attr] = /^\d+$/.test(val) ? val + 'px' : val;
+
+        if ( _.width !== null && _.height !== null ) {
+          style.maxWidth = style.maxHeight = '';
+          style.width = _.width;
+          style.height = _.height;
+        }
+        else if ( _.width !== null ) {
+          style.width = '';
+          style.maxWidth = _.width;
+        }
+        else if ( _.height !== null ) {
+          style.height = '';
+          style.maxHeight = _.height;
+        }
+      },
+
+      srcChanged: function(oval, nval) {
+        var img = document.createElement('img'),
+            _this = this;
+
+        if ( _.width !== null )
+          img.width  = width;
+        if ( _.height !== null )
+          img.height = height;
+
+        img.src = nval;
+        img.toCanvas(function() {
+          _this.$.wrapper.innerHTML = '';
+          _this.$.wrapper.appendChild(this);
+          _this.context = this.getContext('2d');
+          _this.fire('load');
+        });
+      },
+
+      /*
+      setText: function(text, align)
+      setText: function(text, align, valign)
+      setText: function(text, x)
+      setText: function(text, x, y)
+      */
+      setText: function(text, align, valign, x, y) {
+        align = align || 'center';
+        valign = valign || 'middle';
+        x = x || this.context.canvas.width / 2;
+        y = y || this.context.canvas.height / 2;
+
+        this.context.font = this.font;
+        this.context.textAlign = align;
+        this.context.textBaseline = valign;
+        this.context.fillText(text, x, y);
+      }
+      /*
+      attributeChanged: function(name, oval, nval) {
+        //var newVal = this.getAttribute(attrName);
+        console.log(name, 'old: ' + oval, 'new:', nval);
+      }
+      */
+    });
+
+  })();
+  </script>
+</polymer-element>
