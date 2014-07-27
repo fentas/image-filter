@@ -9,17 +9,22 @@ Copyright (c) 2014 mui-is Authors. All rights reserved.
 
 -->
 
-<polymer-element name="image-filter" attributes="src width heigh font">
+<polymer-element name="image-filter" attributes="src width height front blend">
   <template>
 
     <style>
 
-      #wrapper {
+      #output {
         display: inline-block;
       }
 
+
     </style>
-    <div id="wrapper"></div>
+
+    <div style="display: none;">
+      <content id="source" select="img, canvas"></content>
+    </div>
+    <div id="output"></div>
 
   </template>
   <script>
@@ -31,42 +36,75 @@ Copyright (c) 2014 mui-is Authors. All rights reserved.
 
     Polymer('image-filter', {
       font: 'normal 12pt Verdana',
+      blend: 'lighten',
+
       publish: {
         filter: null,
-        context: null,
-        data: null
+        data: null,
+
+        _ctx: null
       },
 
       ready: function() {
         var _this = this;
         Object.defineProperty(_this, 'data', {
           get: function() {
-            return _this.context.canvas.toDataURL();
+            return _this._ctx.canvas.toDataURL();
           }
         });
         Object.defineProperty(_this, 'filter', {
           get: function() {
-            return _this.context.filter;
+            return _this._ctx.filter;
           }
         });
         Object.defineProperty(_this, 'width', {
           get: function() {
-            return _this.context ? _this.context.canvas.clientWidth : 0;
+            return _this._ctx ? _this._ctx.canvas.clientWidth : 0;
           },
           set: _this.resolutionChanged.bind(_this, 'width')
         });
         Object.defineProperty(_this, 'height', {
           get: function() {
-            return _this.context ? _this.context.canvas.clientHeight : 0;
+            return _this._ctx ? _this._ctx.canvas.clientHeight : 0;
           },
           set: _this.resolutionChanged.bind(_this, 'height')
         });
       },
-      domReady: function() {
 
+      attached: function() {
+        var items = this.$.source.getDistributedNodes();
+
+        if ( items.length ) {
+          for ( var i = 0; i < items.length; i++ ) {
+            var item = items[i];
+
+            if ( item instanceof HTMLImageElement )
+              item.toCanvas();
+          }
+        }
+        else {
+          var canvas = document.createElement('canvas');
+          canvas.width = this.width_;
+          canvas.height = this.height_;
+          this.$.wrapper.appendChild(canvas);
+        }
       },
 
-      resolutionChanged: function(attr, val) {
+      domReady: function() {
+        var items = this.$.source.getDistributedNodes();
+
+        this.$.output.innerHTML = '';
+        this._ctx = this.$.output.appendChild(items[0].cloneNode(true)).getContext('2d');
+        for ( var i = 1; i < items.length; i++ ) {
+          this._ctx.filter.blend(items[i])[this.blend]();
+        }
+      },
+
+      blendChanged: function() {
+        this.domReady.apply(this);
+      },
+
+      resolutionChanged: function(attr, val) { // console.warn('here')
         var style = this.context.canvas.style;
         _[attr] = /^\d+$/.test(val) ? val + 'px' : val;
 
